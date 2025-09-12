@@ -1,0 +1,12 @@
+crewai[tools]
+crewai
+crewai_tools[all]
+langchain-openai
+langchain
+langchain_community
+python-dotenv 
+embedchain
+ipykernel
+duckduckgo-search
+beautifulsoup4 
+langchain-groq
