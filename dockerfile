@@ -1,31 +1,36 @@
-# Use an official Python runtime as a base image
-FROM python:3.11-slim-bookworm
+# Layer 1: Base OS image
+FROM python:3.10-slim-bullseye
 
-# Set environment variables to prevent Python from writing pyc files and buffering
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Set the working directory in the container
+# Layer 2: System dependencies and environment setup
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    software-properties-common \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file first for better caching
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
-# Install system dependencies required for some Python packages (like for crewai_tools, etc.)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc python3-dev && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
+# Layer 3: Python dependencies with explicit streamlit installation
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir streamlit && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Copy application code
 COPY . .
 
-# Expose the port Streamlit runs on by default
+# Expose port for Streamlit
 EXPOSE 8501
 
-# Define the command to run the Streamlit app
-# Use the host 0.0.0.0 to make it available outside the container
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+# Run the application
 CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]

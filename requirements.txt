@@ -10,3 +10,4 @@ ipykernel
 duckduckgo-search
 beautifulsoup4 
 langchain-groq
+streamlit
